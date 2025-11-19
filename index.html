@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>36페이지 플립북 (Turn.js 3.x)</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0f1720;
+      display: flex;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
+      color: #e5e7eb;
+    }
+    #wrapper {
+      margin-top: 32px;
+    }
+    #flipbook {
+      width: 960px;
+      height: 640px;
+    }
+    .page {
+      width: 480px;
+      height: 640px;
+      background-size: cover;
+      background-position: center;
+      background-color: #ffffff;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .controls button {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #324355;
+      background: #1f2933;
+      color: #f9fafb;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #243447;
+    }
+    .page-indicator {
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+    @media (max-width: 900px) {
+      #flipbook {
+        width: 600px;
+        height: 400px;
+      }
+      .page {
+        width: 300px;
+        height: 400px;
+      }
+    }
+  </style>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+</head>
+<body>
+
+<div id="wrapper">
+  <div class="controls">
+    <button id="prevBtn">◀ 이전</button>
+    <span class="page-indicator" id="pageIndicator">1 / 36</span>
+    <button id="nextBtn">다음 ▶</button>
+  </div>
+  <div id="flipbook"></div>
+</div>
+
+<script>
+  const totalPages = 36;
+
+  function loadPages() {
+    const fb = document.getElementById('flipbook');
+    for (let i = 1; i <= totalPages; i++) {
+      const page = document.createElement('div');
+      page.className = 'page';
+      page.style.backgroundImage = `url('./pages/${i}.jpg')`;
+      fb.appendChild(page);
+    }
+  }
+
+  function updateIndicator(current) {
+    const indicator = document.getElementById('pageIndicator');
+    indicator.textContent = current + ' / ' + totalPages;
+  }
+
+  loadPages();
+
+  $('#flipbook').turn({
+    width: 960,
+    height: 640,
+    autoCenter: true,
+    elevation: 50,
+    gradients: true,
+    when: {
+      turned: function(e, page) {
+        updateIndicator(page);
+      }
+    }
+  });
+
+  // 초기 페이지 인디케이터
+  updateIndicator(1);
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    $('#flipbook').turn('previous');
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    $('#flipbook').turn('next');
+  });
+
+  // 키보드 ← → 로 페이지 넘기기
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
+    if (e.key === 'ArrowRight') $('#flipbook').turn('next');
+  });
+</script>
+
+</body>
+</html>
