@@ -8,25 +8,26 @@
 
   <style>
     body {
-      margin: 0;
-      background: #0f1720;
-      display: flex;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
-      color: #e5e7eb;
-    }
-    #wrapper {
-      margin-top: 32px;
-    }
-    /* 책 컨테이너는 가운데 정렬만 */
-    #flipbook {
-      margin: 0 auto;
-    }
-    /* 페이지는 크기를 JS에서 조절함 */
-    .page {
-      background-size: cover;
-      background-position: center;
-      background-color: #ffffff;
+  margin: 0;
+  background: #0f1720;
+  display: flex;
+  justify-content: center;
+  align-items: center;      /* 🔹 세로도 가운데 정렬 */
+  min-height: 100vh;        /* 🔹 화면 높이 꽉 채우기 */
+  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
+  color: #e5e7eb;
+}
+#wrapper {
+  margin-top: 0;            /* 🔹 위 여백 제거 */
+}
+#flipbook {
+  margin: 0 auto;
+}
+.page {
+  background-size: cover;
+  background-position: center;
+  background-color: #ffffff;
+}
     }
     .controls {
       display: flex;
@@ -83,21 +84,40 @@
   // 화면 크기에 맞춰 책/페이지 사이즈 + 싱글/더블 모드 계산
   function getBookLayout() {
     const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
 
     let pageWidth = 480;
     let displayMode = 'double'; // 기본은 양면
 
     if (vw <= 768) {
-      // 모바일: 한 페이지씩
+      // 📱 모바일: 단면 + 화면에 꽉 차게
       displayMode = 'single';
-      pageWidth = vw * 0.8;   // 화면의 80% 정도 폭
-    } else if (vw <= 1024) {
-      // 태블릿: 양면이지만 조금 줄이기
-      pageWidth = vw * 0.28;
+
+      // 일단 폭 기준으로 잡고
+      pageWidth = vw * 0.9;
+      let pageHeight = pageWidth * 4 / 3;
+
+      // 너무 키가 크면, 높이를 기준으로 다시 맞추기
+      const maxHeight = vh * 0.9; // 상하 여백 10% 정도만 남김
+      if (pageHeight > maxHeight) {
+        pageHeight = maxHeight;
+        pageWidth = pageHeight * 3 / 4;
+      }
+
+      const bookWidth = pageWidth;
+      const bookHeight = pageHeight;
+      return { bookWidth, bookHeight, pageWidth, pageHeight, displayMode };
     }
 
-    const pageHeight = pageWidth * 4 / 3;  // 3:4 비율
-    const bookWidth = (displayMode === 'double') ? pageWidth * 2 : pageWidth;
+    // 💻 태블릿/PC: 양면
+    if (vw <= 1024) {
+      pageWidth = vw * 0.28;
+    } else {
+      pageWidth = 480;
+    }
+
+    const pageHeight = pageWidth * 4 / 3;
+    const bookWidth = pageWidth * 2;
     const bookHeight = pageHeight;
 
     return { bookWidth, bookHeight, pageWidth, pageHeight, displayMode };
@@ -126,7 +146,7 @@
     $('#flipbook').turn({
       width: s.bookWidth,
       height: s.bookHeight,
-      display: s.displayMode,   // 🔹 여기!
+      display: s.displayMode,
       autoCenter: true,
       elevation: 50,
       gradients: true,
@@ -145,6 +165,7 @@
     // 초기 페이지 인디케이터
     updateIndicator(1);
 
+    // ◀ / ▶ 버튼
     $('#prevBtn').on('click', function () {
       $('#flipbook').turn('previous');
     });
@@ -152,13 +173,26 @@
       $('#flipbook').turn('next');
     });
 
-    // 키보드 ← → 로 페이지 넘기기 (PC용)
+    // 키보드 ← → (PC용)
     $(document).on('keydown', function (e) {
       if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
       if (e.key === 'ArrowRight') $('#flipbook').turn('next');
     });
 
-    // 화면 회전/크기 변경 시 자동으로 싱글/더블 + 크기 재계산
+    // 📱 페이지 아무 곳이나 탭해서 넘기기
+    $('#flipbook').on('click touchend', function (e) {
+      const offset = $(this).offset();
+      const centerX = offset.left + $(this).width() / 2;
+      const x = e.originalEvent.touches ? e.originalEvent.touches[0].clientX : e.clientX;
+
+      if (x < centerX) {
+        $('#flipbook').turn('previous');
+      } else {
+        $('#flipbook').turn('next');
+      }
+    });
+
+    // 화면 회전/크기 변경 시 자동 리사이즈
     $(window).on('resize', function () {
       applySize();
     });
