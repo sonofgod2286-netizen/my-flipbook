@@ -68,7 +68,7 @@
 </div>
 
 <script>
-  const totalPages = 36;  // 36페이지
+  const totalPages = 36;  // 전체 페이지 수
 
   function loadPages() {
     const fb = document.getElementById('flipbook');
@@ -80,31 +80,33 @@
     }
   }
 
-  // 화면 크기에 맞춰 책/페이지 사이즈 계산
-  function getBookSize() {
+  // 화면 크기에 맞춰 책/페이지 사이즈 + 싱글/더블 모드 계산
+  function getBookLayout() {
     const vw = window.innerWidth || document.documentElement.clientWidth;
 
-    // 기본 페이지 너비
     let pageWidth = 480;
+    let displayMode = 'double'; // 기본은 양면
 
-    if (vw <= 480) {
-      pageWidth = vw * 0.42;   // 아주 작은 모바일
-    } else if (vw <= 768) {
-      pageWidth = vw * 0.38;   // 일반 모바일
+    if (vw <= 768) {
+      // 모바일: 한 페이지씩
+      displayMode = 'single';
+      pageWidth = vw * 0.8;   // 화면의 80% 정도 폭
     } else if (vw <= 1024) {
-      pageWidth = vw * 0.32;   // 태블릿
+      // 태블릿: 양면이지만 조금 줄이기
+      pageWidth = vw * 0.28;
     }
 
     const pageHeight = pageWidth * 4 / 3;  // 3:4 비율
-    const bookWidth = pageWidth * 2;
+    const bookWidth = (displayMode === 'double') ? pageWidth * 2 : pageWidth;
     const bookHeight = pageHeight;
 
-    return { bookWidth, bookHeight, pageWidth, pageHeight };
+    return { bookWidth, bookHeight, pageWidth, pageHeight, displayMode };
   }
 
   function applySize() {
-    const s = getBookSize();
+    const s = getBookLayout();
     $('#flipbook').turn('size', s.bookWidth, s.bookHeight);
+    $('#flipbook').turn('display', s.displayMode);
     $('.page').css({
       width: s.pageWidth + 'px',
       height: s.pageHeight + 'px'
@@ -119,11 +121,12 @@
   $(function () {
     loadPages();
 
-    const s = getBookSize();
+    const s = getBookLayout();
 
     $('#flipbook').turn({
       width: s.bookWidth,
       height: s.bookHeight,
+      display: s.displayMode,   // 🔹 여기!
       autoCenter: true,
       elevation: 50,
       gradients: true,
@@ -149,13 +152,13 @@
       $('#flipbook').turn('next');
     });
 
-    // 키보드 ← → 로 페이지 넘기기
+    // 키보드 ← → 로 페이지 넘기기 (PC용)
     $(document).on('keydown', function (e) {
       if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
       if (e.key === 'ArrowRight') $('#flipbook').turn('next');
     });
 
-    // 화면 회전/크기 변경 시 자동 리사이즈
+    // 화면 회전/크기 변경 시 자동으로 싱글/더블 + 크기 재계산
     $(window).on('resize', function () {
       applySize();
     });
