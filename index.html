@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>시민과 함께하는 올바른 자전거 이용하기</title>
+
   <style>
     body {
       margin: 0;
@@ -17,13 +18,12 @@
     #wrapper {
       margin-top: 32px;
     }
+    /* 책 컨테이너는 가운데 정렬만 */
     #flipbook {
-      width: 960px;
-      height: 640px;
+      margin: 0 auto;
     }
+    /* 페이지는 크기를 JS에서 조절함 */
     .page {
-      width: 480px;
-      height: 640px;
       background-size: cover;
       background-position: center;
       background-color: #ffffff;
@@ -49,17 +49,25 @@
       font-variant-numeric: tabular-nums;
       font-size: 14px;
     }
-    @media (max-width: 900px) {
-      #flipbook {
-        width: 600px;
-        height: 400px;
-      }
-      .page {
-        width: 300px;
-        height: 400px;
-      }
-    }
-  <script>
+  </style>
+
+  <!-- jQuery 먼저 로드 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- 그다음 Turn.js 3.x -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+</head>
+<body>
+
+<div id="wrapper">
+  <div class="controls">
+    <button id="prevBtn">◀ 이전</button>
+    <span class="page-indicator" id="pageIndicator">1 / 36</span>
+    <button id="nextBtn">다음 ▶</button>
+  </div>
+  <div id="flipbook"></div>
+</div>
+
+<script>
   const totalPages = 36;  // 36페이지
 
   function loadPages() {
@@ -76,7 +84,7 @@
   function getBookSize() {
     const vw = window.innerWidth || document.documentElement.clientWidth;
 
-    // 기본 페이지 너비(PC)
+    // 기본 페이지 너비
     let pageWidth = 480;
 
     if (vw <= 480) {
