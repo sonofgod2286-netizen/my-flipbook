@@ -59,24 +59,8 @@
         height: 400px;
       }
     }
-  </style>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
-</head>
-<body>
-
-<div id="wrapper">
-  <div class="controls">
-    <button id="prevBtn">◀ 이전</button>
-    <span class="page-indicator" id="pageIndicator">1 / 36</span>
-    <button id="nextBtn">다음 ▶</button>
-  </div>
-  <div id="flipbook"></div>
-</div>
-
-<script>
-  const totalPages = 36;
+  <script>
+  const totalPages = 36;  // 36페이지
 
   function loadPages() {
     const fb = document.getElementById('flipbook');
@@ -88,40 +72,85 @@
     }
   }
 
+  // 화면 크기에 맞춰 책/페이지 사이즈 계산
+  function getBookSize() {
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+
+    // 기본 페이지 너비(PC)
+    let pageWidth = 480;
+
+    if (vw <= 480) {
+      pageWidth = vw * 0.42;   // 아주 작은 모바일
+    } else if (vw <= 768) {
+      pageWidth = vw * 0.38;   // 일반 모바일
+    } else if (vw <= 1024) {
+      pageWidth = vw * 0.32;   // 태블릿
+    }
+
+    const pageHeight = pageWidth * 4 / 3;  // 3:4 비율
+    const bookWidth = pageWidth * 2;
+    const bookHeight = pageHeight;
+
+    return { bookWidth, bookHeight, pageWidth, pageHeight };
+  }
+
+  function applySize() {
+    const s = getBookSize();
+    $('#flipbook').turn('size', s.bookWidth, s.bookHeight);
+    $('.page').css({
+      width: s.pageWidth + 'px',
+      height: s.pageHeight + 'px'
+    });
+  }
+
   function updateIndicator(current) {
     const indicator = document.getElementById('pageIndicator');
     indicator.textContent = current + ' / ' + totalPages;
   }
 
-  loadPages();
+  $(function () {
+    loadPages();
 
-  $('#flipbook').turn({
-    width: 960,
-    height: 640,
-    autoCenter: true,
-    elevation: 50,
-    gradients: true,
-    when: {
-      turned: function(e, page) {
-        updateIndicator(page);
+    const s = getBookSize();
+
+    $('#flipbook').turn({
+      width: s.bookWidth,
+      height: s.bookHeight,
+      autoCenter: true,
+      elevation: 50,
+      gradients: true,
+      when: {
+        turned: function (e, page) {
+          updateIndicator(page);
+        }
       }
-    }
-  });
+    });
 
-  // 초기 페이지 인디케이터
-  updateIndicator(1);
+    $('.page').css({
+      width: s.pageWidth + 'px',
+      height: s.pageHeight + 'px'
+    });
 
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    $('#flipbook').turn('previous');
-  });
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    $('#flipbook').turn('next');
-  });
+    // 초기 페이지 인디케이터
+    updateIndicator(1);
 
-  // 키보드 ← → 로 페이지 넘기기
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
-    if (e.key === 'ArrowRight') $('#flipbook').turn('next');
+    $('#prevBtn').on('click', function () {
+      $('#flipbook').turn('previous');
+    });
+    $('#nextBtn').on('click', function () {
+      $('#flipbook').turn('next');
+    });
+
+    // 키보드 ← → 로 페이지 넘기기
+    $(document).on('keydown', function (e) {
+      if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
+      if (e.key === 'ArrowRight') $('#flipbook').turn('next');
+    });
+
+    // 화면 회전/크기 변경 시 자동 리사이즈
+    $(window).on('resize', function () {
+      applySize();
+    });
   });
 </script>
 
